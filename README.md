@@ -1,4 +1,5 @@
-# ip-blocker
+# csgo-server-picker
+
 A blocker for specified IPs
 
 This is a project stub, nothing is implemented yet!
