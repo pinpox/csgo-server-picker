@@ -4,13 +4,18 @@ import "fmt"
 
 import "github.com/coreos/go-iptables/iptables"
 
-var blockingTable iptables.IPTables
+// CHAIN specifies the chain that will be used by the program
+var CHAIN = "OUTPUT"
 
-var CHAIN = "CSGO"
+// TABLE specifies the table that will be used by the program
 var TABLE = "filter"
 
 func main() {
-	fmt.Println("vim-go")
+
+	ipt, err := iptables.New()
+	if err != nil {
+		panic(err)
+	}
 
 	// block ip
 	// iptables -A INPUT -s 10.10.10.10 -j DROP
@@ -22,26 +27,26 @@ func main() {
 	// iptables -D INPUT -s 10.10.10.10 -j DROP
 
 	fmt.Println("List existing rules")
-	ListRules()
+	ListRules(ipt)
 
 	fmt.Println("Bock ip 10.10.10.10")
-	BlockServer("10.10.10.10")
+	BlockServer(ipt, "10.10.10.10")
 
 	fmt.Println("List rules again")
-	ListRules()
+	ListRules(ipt)
 
 	fmt.Println("Unblock ip 10.10.10.10")
-	UnblockServer("10.10.10.10")
+	UnblockServer(ipt, "10.10.10.10")
 
 	fmt.Println("List rules one last time")
-	ListRules()
+	ListRules(ipt)
 }
 
 // ListRules prints all IP rules
-func ListRules() {
+func ListRules(ipt *iptables.IPTables) {
 
 	// func (ipt *IPTables) List(table, chain string) ([]string, error)
-	rules, err := blockingTable.List(TABLE, CHAIN)
+	rules, err := ipt.List(TABLE, CHAIN)
 	if err != nil {
 		fmt.Println("Could not list rules")
 		panic(err)
@@ -50,21 +55,21 @@ func ListRules() {
 }
 
 // BlockServer blocks a specific IP
-func BlockServer(ip string) {
+func BlockServer(ipt *iptables.IPTables, ip string) {
 
 	// func (ipt *IPTables) Append(table, chain string, rulespec ...string) error
 	// -I INPUT -s {IP-HERE} -j DROP
-
-	rule := "iptables -A INPUT -s 65.55.44.100 -j DROP"
-	blockingTable.Append("blockingTable", "csgo", rule)
-
+	ipt.AppendUnique(TABLE, CHAIN, "-s", ip, "-j", "ACCEPT")
 }
 
 // UnblockServer removes the block rule for a specific ip
-func UnblockServer(ip string) {
+func UnblockServer(ipt *iptables.IPTables, ip string) {
+
+	ipt.Delete(TABLE, CHAIN, "-s", ip, "-j", "ACCEPT")
+
 }
 
 // Cleanup removes all created rules
-func Cleanup() {
+func Cleanup(ipt *iptables.IPTables) {
 
 }
